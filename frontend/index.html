@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAINIK — Command Interface</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&family=Exo+2:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header>
+    <div class="logo">SAINIK <span>SMART AI FOR NATIONAL INTELLIGENCE & COMMAND</span></div>
+    <div class="header-right">
+      <div class="threat-badge threat-routine" id="threatBadge">ROUTINE</div>
+      <div class="clock" id="clock">0000 HRS</div>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar-left">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Operational Status</div>
+        <div class="status-row">
+          <span class="status-key">Theatre</span>
+          <span class="status-val" id="statTheatre">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-key">Threat Level</span>
+          <span class="status-val green" id="statThreat">ROUTINE</span>
+        </div>
+        <div class="status-row">
+          <span class="status-key">Active Mission</span>
+          <span class="status-val" id="statMission">None</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Units On Standby</div>
+        <div id="unitsList">
+          <div class="unit-item"><div class="unit-dot standby"></div>Awaiting theatre</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section" style="flex:1">
+        <div class="sidebar-label">Demo Flow</div>
+        <div id="demoSteps"></div>
+      </div>
+    </aside>
+
+    <!-- MAIN CHAT -->
+    <main class="main">
+
+      <!-- Theatre selector shown until theatre is picked -->
+      <div class="theatre-select" id="theatreSelect">
+        <div class="ts-label">SELECT OPERATIONAL THEATRE TO BEGIN</div>
+        <div class="ts-buttons">
+          <button onclick="setTheatre('LOC')">
+            <span class="ts-key">A</span>
+            Line of Control — J&K
+          </button>
+          <button onclick="setTheatre('EASTERN')">
+            <span class="ts-key">B</span>
+            Eastern Sector — Arunachal Pradesh
+          </button>
+          <button onclick="setTheatre('MARITIME')">
+            <span class="ts-key">C</span>
+            Maritime — Arabian Sea / Bay of Bengal
+          </button>
+        </div>
+      </div>
+
+      <div class="chat-area" id="chatArea"></div>
+
+      <div class="input-area">
+        <!-- Confirmation gate — shown when HUMAN CONFIRMATION REQUIRED -->
+        <div class="confirm-gate" id="confirmGate" style="display:none">
+          <span class="confirm-warning">Action requires commander authorisation</span>
+          <button class="btn-confirm" onclick="sendConfirm()">CONFIRM</button>
+          <button class="btn-cancel" onclick="sendCancel()">Cancel</button>
+        </div>
+        <!-- Normal input -->
+        <div class="input-row" id="inputRow">
+          <input
+            type="text"
+            id="msgInput"
+            placeholder="Issue command, Commander..."
+            onkeydown="if(event.key==='Enter') sendMessage()"
+            autocomplete="off"
+          >
+          <button onclick="sendMessage()">SEND</button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- RIGHT SIDEBAR — AUDIT LOG -->
+    <aside class="sidebar-right">
+      <div class="sidebar-label" style="padding:16px 16px 10px">Audit Log</div>
+      <div id="auditLog">
+        <div class="audit-empty">No actions logged yet.</div>
+      </div>
+    </aside>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
