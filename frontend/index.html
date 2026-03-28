@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAINIK — Command Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #00ff00;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            gap: 10px;
+            padding: 10px;
+        }
+        
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: linear-gradient(90deg, #0f0f1e 0%, #1a1a2e 100%);
+            border: 2px solid #00ff00;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .threat-badge {
+            padding: 8px 15px;
+            border: 2px solid;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .threat-routine {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        
+        .threat-elevated {
+            background: rgba(255, 165, 0, 0.2);
+            border-color: #ffa500;
+            color: #ffa500;
+            box-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+        }
+        
+        .threat-high {
+            background: rgba(255, 69, 0, 0.2);
+            border-color: #ff4500;
+            color: #ff4500;
+            box-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
+        }
+        
+        .threat-critical {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: #ff0000;
+            color: #ff0000;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Left Panel - Status */
+        .status-panel {
+            grid-column: 1;
+            grid-row: 2;
+            background: rgba(15, 20, 40, 0.8);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            overflow-y: auto;
+            border-radius: 3px;
+        }
+        
+        .status-panel h3 {
+            border-bottom: 1px solid #00ff00;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+        }
+        
+        .status-item {
+            margin: 8px 0;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        
+        .status-label {
+            color: #00ccff;
+            font-weight: bold;
+        }
+        
+        /* Center Panel - Main Dashboard */
+        .main-panel {
+            grid-column: 2;
+            grid-row: 2;
+            background: rgba(15, 20, 40, 0.8);
+            border: 1px solid #00ff00;
+            padding: 20px;
+            overflow-y: auto;
+            border-radius: 3px;
+        }
+        
+        .main-panel h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .content {
+            display: none;
+        }
+        
+        .content.active {
+            display: block;
+        }
+        
+        .briefing-text {
+            white-space: pre-wrap;
+            font-size: 12px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-left: 3px solid #00ff00;
+        }
+        
+        /* Right Panel - Actions */
+        .actions-panel {
+            grid-column: 3;
+            grid-row: 2;
+            background: rgba(15, 20, 40, 0.8);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            overflow-y: auto;
+            border-radius: 3px;
+        }
+        
+        .actions-panel h3 {
+            border-bottom: 1px solid #00ff00;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+        
+        .action-btn:hover {
+            background: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        .action-btn.critical {
+            border-color: #ff0000;
+            color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+        
+        .action-btn.critical:hover {
+            background: rgba(255, 0, 0, 0.3);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+        
+        /* Forms */
+        .form-group {
+            margin: 15px 0;
+        }
+        
+        label {
+            display: block;
+            color: #00ccff;
+            font-size: 12px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #00ccff;
+            box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+        }
+        
+        .btn-submit {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            border-radius: 3px;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .btn-submit:hover {
+            background: rgba(0, 255, 0, 0.4);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        /* Footer */
+        .footer {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            background: linear-gradient(90deg, #0f0f1e 0%, #1a1a2e 100%);
+            border: 1px solid #00ff00;
+            padding: 10px;
+            font-size: 11px;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .time-display {
+            font-weight: bold;
+            color: #00ccff;
+        }
+        
+        .scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .scroll::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+        
+        .scroll::-webkit-scrollbar-thumb:hover {
+            background: #00ccff;
+        }
+        
+        .status-panel, .main-panel, .actions-panel {
+            scroll-behavior: smooth;
+        }
+        
+        .alert-message {
+            background: rgba(255, 0, 0, 0.2);
+            border-left: 3px solid #ff0000;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            color: #ff6666;
+        }
+        
+        .success-message {
+            background: rgba(0, 255, 0, 0.2);
+            border-left: 3px solid #00ff00;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            color: #66ff66;
+        }
+        
+        .tab-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .tab-btn {
+            padding: 8px;
+            background: rgba(0, 100, 100, 0.2);
+            border: 1px solid #00ccff;
+            color: #00ccff;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: rgba(0, 255, 0, 0.3);
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(0, 255, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔱 SAINIK COMMAND DASHBOARD</h1>
+            <div class="threat-badge threat-routine" id="threatBadge">
+                THREAT: ROUTINE
+            </div>
+        </div>
+        
+        <!-- Left Panel: Status -->
+        <div class="status-panel scroll">
+            <h3>⚡ OPERATIONAL STATUS</h3>
+            <div id="statusContent">
+                <div class="status-item">
+                    <span class="status-label">Theatre:</span> <span id="activeTheatre">None</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Active Mission:</span> <span id="activeMission">None</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Units on Standby:</span>
+                    <div id="unitsList" style="margin-left: 10px; font-size: 11px;"></div>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Pending Actions:</span>
+                    <div id="pendingActions" style="margin-left: 10px; font-size: 11px;"></div>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Last Action:</span> <span id="lastAction">None</span>
+                </div>
+            </div>
+            
+            <h3 style="margin-top: 20px;">📋 AUDIT LOG</h3>
+            <div id="auditLog" style="font-size: 10px; line-height: 1.5;"></div>
+        </div>
+        
+        <!-- Center Panel: Main Dashboard -->
+        <div class="main-panel scroll">
+            <h2>COMMAND CENTER</h2>
+            
+            <!-- Session Init -->
+            <div id="content-init" class="content active">
+                <div class="briefing-text" id="initBriefing"></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <button class="action-btn" onclick="selectTheatre('Line of Control')">
+                        [A] Line of Control<br>Jammu & Kashmir
+                    </button>
+                    <button class="action-btn" onclick="selectTheatre('Eastern Sector')">
+                        [B] Eastern Sector<br>Arunachal Pradesh
+                    </button>
+                    <button class="action-btn" onclick="selectTheatre('Maritime')">
+                        [C] Maritime<br>Arabian Sea / Bay of Bengal
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Main Operations -->
+            <div id="content-ops" class="content" style="display: none;">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchTab('briefing')">Situation Briefing</button>
+                    <button class="tab-btn" onclick="switchTab('intelligence')">Intelligence</button>
+                    <button class="tab-btn" onclick="switchTab('mission')">Schedule Mission</button>
+                    <button class="tab-btn" onclick="switchTab('sitrep')">Send SITREP</button>
+                </div>
+                
+                <!-- Briefing Tab -->
+                <div id="tab-briefing" class="tab-content">
+                    <button class="btn-submit" onclick="requestStatusBriefing()">
+                        📡 REQUEST STATUS BRIEFING
+                    </button>
+                    <div id="briefingOutput" style="margin-top: 15px;"></div>
+                </div>
+                
+                <!-- Intelligence Tab -->
+                <div id="tab-intelligence" class="tab-content" style="display: none;">
+                    <div class="form-group">
+                        <label>Sector to Search:</label>
+                        <input type="text" id="intelSector" placeholder="e.g., Tawang, Gurez" value="Tawang">
+                    </div>
+                    <div class="form-group">
+                        <label>Time Range (hours):</label>
+                        <input type="number" id="intelTimeRange" value="72" min="1" max="720">
+                    </div>
+                    <button class="btn-submit" onclick="searchIntelligence()">
+                        🔍 RETRIEVE INTELLIGENCE
+                    </button>
+                    <div id="intelOutput" style="margin-top: 15px;"></div>
+                </div>
+                
+                <!-- Mission Scheduling Tab -->
+                <div id="tab-mission" class="tab-content" style="display: none;">
+                    <div class="form-group">
+                        <label>Mission Name:</label>
+                        <input type="text" id="missionName" placeholder="e.g., Aerial Surveillance Grid-4482">
+                    </div>
+                    <div class="form-group">
+                        <label>Mission Type:</label>
+                        <select id="missionType">
+                            <option>SURVEILLANCE</option>
+                            <option>PATROL</option>
+                            <option>RECONNAISSANCE</option>
+                            <option>STRIKE_SUPPORT</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Scheduled Time (Military):</label>
+                        <input type="text" id="missionTime" placeholder="e.g., 0330 hrs">
+                    </div>
+                    <div class="form-group">
+                        <label>Grid Reference:</label>
+                        <input type="text" id="missionGrid" placeholder="e.g., 4482">
+                    </div>
+                    <button class="btn-submit" onclick="scheduleMission()">
+                        📅 SCHEDULE MISSION
+                    </button>
+                    <div id="missionOutput" style="margin-top: 15px;"></div>
+                </div>
+                
+                <!-- SITREP Tab -->
+                <div id="tab-sitrep" class="tab-content" style="display: none;">
+                    <div class="form-group">
+                        <label>Recipient:</label>
+                        <input type="text" id="sitrepRecipient" placeholder="e.g., Eastern Command">
+                    </div>
+                    <div class="form-group">
+                        <label>SITUATION:</label>
+                        <textarea id="sitrepSituation" placeholder="Describe current situation..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>MISSION:</label>
+                        <textarea id="sitrepMission" placeholder="Describe mission..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>EXECUTION:</label>
+                        <textarea id="sitrepExecution" placeholder="Describe execution plan..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>COMMAND:</label>
+                        <textarea id="sitrepCommand" placeholder="Command structure..."></textarea>
+                    </div>
+                    <button class="btn-submit" onclick="draftSITREP()">
+                        📋 DRAFT SITREP
+                    </button>
+                    <div id="sitrepOutput" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+            
+            <!-- Demo Scenarios -->
+            <div id="content-demo" class="content" style="display: none;">
+                <h3>Demo Scenarios (Auto-execution for judges)</h3>
+                <button class="action-btn" onclick="demoStep1()">Step 1: Context Briefing</button>
+                <button class="action-btn" onclick="demoStep2()">Step 2: Intelligence Retrieval</button>
+                <button class="action-btn" onclick="demoStep3()">Step 3: Threat Escalation</button>
+                <button class="action-btn" onclick="demoStep4()">Step 4: Mission Scheduling + Risk</button>
+                <button class="action-btn" onclick="demoStep5()">Step 5: Ambiguity Resolution</button>
+                <button class="action-btn" onclick="demoStep6()" class="critical">Step 6: Confirmation Gate (LETHAL)</button>
+                <button class="action-btn" onclick="demoStep7()">Step 7: Send SITREP</button>
+                <button class="action-btn" onclick="demoStep8()">Step 8: Tactical Reminder</button>
+                <div id="demoOutput" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+        
+        <!-- Right Panel: Actions -->
+        <div class="actions-panel scroll">
+            <h3>📡 COMMAND ACTIONS</h3>
+            
+            <button class="action-btn" onclick="switchToOps()">
+                → OPERATIONS MODE
+            </button>
+            
+            <button class="action-btn" onclick="switchToDemo()">
+                → DEMO MODE (Judges)
+            </button>
+            
+            <h3 style="margin-top: 20px;">⚠️  TACTICAL</h3>
+            
+            <button class="action-btn" onclick="setReminder()">
+                🔔 SET REMINDER
+            </button>
+            
+            <button class="action-btn" onclick="requestClarification()">
+                ❓ REQUEST CLARIFICATION
+            </button>
+            
+            <h3 style="margin-top: 20px;">🔴 CRITICAL</h3>
+            
+            <button class="action-btn critical" onclick="confirmLACCrossing()">
+                🚨 LAC CROSSING
+            </button>
+            
+            <button class="action-btn critical" onclick="requestEngagementAuthorization()">
+                ⚔️  REQUEST ENGAGEMENT
+            </button>
+            
+            <button class="action-btn critical" onclick="confirmEngagement()">
+                🔴 AUTHORIZE ENGAGEMENT
+            </button>
+            
+            <h3 style="margin-top: 20px;">📊 INFO</h3>
+            
+            <button class="action-btn" onclick="refreshStatus()">
+                🔄 REFRESH STATUS
+            </button>
+            
+            <button class="action-btn" onclick="viewAuditLog()">
+                📜 VIEW AUDIT LOG
+            </button>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <span>SAINIK v0.1.0 | PSG Hackathon</span>
+            <span class="time-display" id="timeDisplay">00:00</span>
+            <span id="statusDisplay">Ready</span>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script>
+        const API_BASE = window.location.origin;
+        let currentTheatre = null;
+        let threatLevel = "ROUTINE";
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', async () => {
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Fetch and display initial briefing
+            const res = await fetch(`${API_BASE}/api/init`);
+            const data = await res.json();
+            document.getElementById('initBriefing').textContent = data.briefing;
+        });
+        
+        // Update military time display
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const mins = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('timeDisplay').textContent = `${hours}${mins} hrs`;
+        }
+        
+        // Select theatre
+        async function selectTheatre(theatre) {
+            currentTheatre = theatre;
+            try {
+                const res = await fetch(`${API_BASE}/api/theatre-select`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ theatre })
+                });
+                const data = await res.json();
+                document.getElementById('content-init').style.display = 'none';
+                document.getElementById('content-ops').style.display = 'block';
+                updateStatusPanel();
+                
+                const output = document.createElement('div');
+                output.innerHTML = `<pre style="white-space: pre-wrap;">${data.response}</pre>`;
+                document.getElementById('briefingOutput').appendChild(output);
+                updateThreatBadge(data.threat_level);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+        }
+        
+        // Request status briefing
+        async function requestStatusBriefing() {
+            try {
+                const res = await fetch(`${API_BASE}/api/status/briefing`);
+                const data = await res.json();
+                const output = `
+OPERATIONAL STATUS BRIEFING
+═══════════════════════════════════════════════════════════════
+Threat Level:       ${data.threat_level}
+Active Theatre:     ${data.theatre || 'None'}
+Current Mission:    ${data.current_mission || 'None'}
+Units on Standby:   ${data.units_on_standby.join(', ')}
+Pending Actions:    ${data.pending_actions.length > 0 ? data.pending_actions.join(', ') : 'None'}
+Last Action:        ${data.last_action || 'None'}
+═══════════════════════════════════════════════════════════════
+
+Standing by for orders, Commander.
+                `;
+                document.getElementById('briefingOutput').innerHTML = `<pre>${output}</pre>`;
+                updateStatusPanel();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Search intelligence
+        async function searchIntelligence() {
+            const sector = document.getElementById('intelSector').value;
+            const timeRange = parseInt(document.getElementById('intelTimeRange').value);
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/intelligence/search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sector,
+                        time_range_hours: timeRange
+                    })
+                });
+                const data = await res.json();
+                
+                let output = `INTELLIGENCE RETRIEVED — Sector: ${data.sector}\n`;
+                output += `═════════════════════════════════════════════════════════════════\n\n`;
+                
+                data.reports.forEach((r, i) => {
+                    output += `Report ${i + 1}:\n`;
+                    output += `  Date: ${r.date}\n`;
+                    output += `  Sector: ${r.sector}\n`;
+                    output += `  Grid: ${r.grid}\n`;
+                    output += `  Type: ${r.threat_type}\n`;
+                    output += `  Summary: ${r.summary}\n`;
+                    output += `  Severity: ${r.severity}\n\n`;
+                });
+                
+                if (data.analysis) {
+                    output += `${data.analysis}\n`;
+                }
+                
+                document.getElementById('intelOutput').innerHTML = `<pre>${output}</pre>`;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Schedule mission
+        async function scheduleMission() {
+            const name = document.getElementById('missionName').value;
+            const type = document.getElementById('missionType').value;
+            const time = document.getElementById('missionTime').value;
+            const grid = document.getElementById('missionGrid').value;
+            
+            if (!name || !time) {
+                alert('❌ Mission name and time required');
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/mission/schedule`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        mission_type: type,
+                        theatre: currentTheatre,
+                        scheduled_time: time,
+                        units_to_allocate: ['IAF'],
+                        grid_reference: grid
+                    })
+                });
+                const data = await res.json();
+                document.getElementById('missionOutput').innerHTML = `<pre>${data.confirmation}</pre>`;
+                updateStatusPanel();
+                updateThreatBadge(data.threat_level);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Draft SITREP
+        async function draftSITREP() {
+            const recipient = document.getElementById('sitrepRecipient').value;
+            const situation = document.getElementById('sitrepSituation').value;
+            const mission = document.getElementById('sitrepMission').value;
+            const execution = document.getElementById('sitrepExecution').value;
+            const command = document.getElementById('sitrepCommand').value;
+            
+            if (!recipient || !situation) {
+                alert('❌ Recipient and situation required');
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/sitrep/draft`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipient,
+                        situation,
+                        mission,
+                        execution,
+                        command
+                    })
+                });
+                const data = await res.json();
+                document.getElementById('sitrepOutput').innerHTML = `
+                    <pre>${data.draft}</pre>
+                    <button class="btn-submit" onclick="sendSITREP('${data.sitrep_id}')">✓ SEND SITREP</button>
+                `;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Send SITREP
+        async function sendSITREP(sitrepId) {
+            try {
+                const res = await fetch(`${API_BASE}/api/sitrep/send/${sitrepId}`, { method: 'POST' });
+                const data = await res.json();
+                document.getElementById('sitrepOutput').innerHTML += `<pre>${data.message}</pre>`;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Set reminder
+        async function setReminder() {
+            const event = prompt('Event to remind:', 'Check drone feed');
+            const time = prompt('Time (e.g., 0500 hrs):', '0500 hrs');
+            const priority = prompt('Priority (CRITICAL/HIGH/ROUTINE):', 'HIGH');
+            
+            if (!event || !time) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/reminder/set`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event, scheduled_time: time, priority })
+                });
+                const data = await res.json();
+                alert(data.message);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Threat escalation
+        async function confirmLACCrossing() {
+            const grid = prompt('Grid coordinate:', '4482');
+            if (!grid) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/threat/confirm-lac-crossing`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        grid_reference: grid,
+                        target_type: 'LAC_CROSSING',
+                        priority_level: 'CRITICAL'
+                    })
+                });
+                const data = await res.json();
+                alert(data.notification);
+                updateThreatBadge(data.threat_level);
+                updateStatusPanel();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Engagement authorization
+        async function requestEngagementAuthorization() {
+            const grid = prompt('Target grid:', '4482');
+            if (!grid) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/engagement/request-authorization`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        grid_reference: grid,
+                        target_type: 'HOSTILE_CONTACT',
+                        priority_level: 'CRITICAL'
+                    })
+                });
+                const data = await res.json();
+                alert(data.gate);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Confirm engagement
+        async function confirmEngagement() {
+            const code = prompt('Authorization code:', '');
+            if (!code) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/engagement/authorize`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_grid: '4482',
+                        engagement_type: 'PRECISION_STRIKE',
+                        authorization_code: code
+                    })
+                });
+                const data = await res.json();
+                alert(data.message);
+                if (data.status === 'authorized') {
+                    updateStatusPanel();
+                    updateThreatBadge(data.threat_level);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Update threat badge
+        function updateThreatBadge(level) {
+            const badge = document.getElementById('threatBadge');
+            badge.className = 'threat-badge threat-' + level.toLowerCase();
+            badge.textContent = `THREAT: ${level}`;
+        }
+        
+        // Update status panel
+        async function updateStatusPanel() {
+            try {
+                const res = await fetch(`${API_BASE}/api/status/briefing`);
+                const data = await res.json();
+                
+                document.getElementById('activeTheatre').textContent = data.theatre || 'None';
+                document.getElementById('activeMission').textContent = data.current_mission || 'None';
+                
+                const unitsList = document.getElementById('unitsList');
+                unitsList.innerHTML = data.units_on_standby.map(u => `• ${u}`).join('<br>');
+                
+                const pendingList = document.getElementById('pendingActions');
+                pendingList.innerHTML = data.pending_actions.length > 0 
+                    ? data.pending_actions.map(p => `• ${p}`).join('<br>')
+                    : '(None)';
+                
+                document.getElementById('lastAction').textContent = data.last_action || 'None';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Refresh status
+        function refreshStatus() {
+            updateStatusPanel();
+            requestStatusBriefing();
+        }
+        
+        // View audit log
+        async function viewAuditLog() {
+            try {
+                const res = await fetch(`${API_BASE}/api/audit/log`);
+                const data = await res.json();
+                document.getElementById('auditLog').innerHTML = `<pre>${data.summary}</pre>`;
+                alert(`Total actions logged: ${data.total_actions}`);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Request clarification
+        function requestClarification() {
+            alert('To demonstrate Ambiguity Resolution Protocol:\n\nType: "Strike the position"\n\nSAINIK will refuse and request clarification.');
+        }
+        
+        // Switch modes
+        function switchToOps() {
+            document.getElementById('content-init').style.display = 'none';
+            document.getElementById('content-ops').style.display = 'block';
+            document.getElementById('content-demo').style.display = 'none';
+        }
+        
+        function switchToDemo() {
+            document.getElementById('content-init').style.display = 'none';
+            document.getElementById('content-ops').style.display = 'none';
+            document.getElementById('content-demo').style.display = 'block';
+        }
+        
+        // Demo steps (simplified for judges)
+        async function demoStep1() {
+            alert('STEP 1: Context Briefing Demonstrated\n\nUse "Refresh Status" button to see current operational status.\n\nThis demonstrates:\n✓ State tracking\n✓ Situational awareness\n✓ Military tone');
+            requestStatusBriefing();
+        }
+        
+        async function demoStep2() {
+            alert('STEP 2: Intelligence Retrieval\n\nSearching for infiltration reports from Tawang sector...');
+            document.getElementById('intelSector').value = 'Tawang';
+            searchIntelligence();
+        }
+        
+        async function demoStep3() {
+            alert('STEP 3: Threat Escalation\n\nConfirming LAC crossing at Grid 4482...');
+            const res = await fetch(`${API_BASE}/api/threat/confirm-lac-crossing`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    grid_reference: '4482',
+                    target_type: 'LAC_CROSSING',
+                    priority_level: 'CRITICAL'
+                })
+            });
+            const data = await res.json();
+            alert(data.notification);
+            updateThreatBadge(data.threat_level);
+        }
+        
+        async function demoStep4() {
+            alert('STEP 4: Mission Scheduling + Risk Assessment\n\nScheduling aerial surveillance...');
+            document.getElementById('missionName').value = 'Aerial Surveillance Grid-4482';
+            document.getElementById('missionTime').value = '0330 hrs';
+            document.getElementById('missionGrid').value = '4482';
+            scheduleMission();
+        }
+        
+        function demoStep5() {
+            alert('STEP 5: Ambiguity Resolution Protocol\n\nWhen a command is ambiguous, SAINIK:\n✗ Does NOT guess\n✗ Does NOT proceed blindly\n✓ Asks ONE specific clarifying question\n✓ Waits for confirmation\n\nExample: "Strike the position" → REQUEST CLARIFICATION');
+        }
+        
+        function demoStep6() {
+            alert('STEP 6: Human Confirmation Gate (LETHAL)\n\nFor any lethal/irreversible action:\n\n🔴 SAINIK STOPS\n🔴 Shows full Mission Risk Assessment\n🔴 Requires explicit CONFIRM\n\nKey: SAINIK does NOT proceed without CONFIRM');
+        }
+        
+        async function demoStep7() {
+            alert('STEP 7: Secure Communications (SITREP)\n\nDrafting SITREP to Eastern Command...');
+            document.getElementById('sitrepRecipient').value = 'Eastern Command';
+            document.getElementById('sitrepSituation').value = 'Confirmed LAC crossing at Grid 4482. 8-12 PLA personnel detected.';
+            document.getElementById('sitrepMission').value = 'Initiate aerial surveillance. Prepare tactical response.';
+            document.getElementById('sitrepExecution').value = 'IAF P-8I Poseidon deployed. Ground units on standby.';
+            document.getElementById('sitrepCommand').value = 'Eastern Sector Command - Full authority.';
+            draftSITREP();
+        }
+        
+        function demoStep8() {
+            alert('STEP 8: Tactical Reminders\n\nSetting reminder for drone surveillance check at 0500 hrs...');
+            const event = 'Check drone surveillance feed';
+            const time = '0500 hrs';
+            const priority = 'HIGH';
+            
+            fetch(`${API_BASE}/api/reminder/set`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event, scheduled_time: time, priority })
+            }).then(r => r.json()).then(data => {
+                alert(data.message);
+            });
+        }
+    </script>
+</body>
+</html>
