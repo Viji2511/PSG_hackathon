@@ -253,8 +253,8 @@ class ContextManager:
         self,
         session_id: str,
         action_id: str,
-        action_desc: str,
-        risk_level: str
+        description: str,
+        risk_level: str = "medium"
     ) -> None:
         """
         Set an action awaiting confirmation.
@@ -262,14 +262,14 @@ class ContextManager:
         Args:
             session_id: Session identifier
             action_id: Action identifier
-            action_desc: Readable description of action
+            description: Readable description of action
             risk_level: Risk level (low/medium/high/critical)
         """
         session = self.update_context(
             session_id,
             pending_confirmation={
                 "action_id": action_id,
-                "description": action_desc,
+                "description": description,
                 "risk_level": risk_level,
                 "awaiting_since": datetime.utcnow().isoformat()
             }
@@ -280,6 +280,23 @@ class ContextManager:
         """Clear pending confirmation status"""
         self.update_context(session_id, pending_confirmation=None)
         logger.info(f"Pending confirmation cleared for session {session_id}")
+    
+    def list_user_sessions(self, user_id: Optional[str] = None) -> List[SessionContext]:
+        """
+        List all sessions for a user (or all sessions if user_id is None)
+        
+        Args:
+            user_id: Optional user identifier to filter by
+        
+        Returns:
+            List of SessionContext matching the filter
+        """
+        sessions = list(self._sessions.values())
+        
+        if user_id:
+            sessions = [s for s in sessions if s.user_id == user_id]
+        
+        return sorted(sessions, key=lambda s: s.created_at, reverse=True)
     
     def set_user_preference(
         self,
