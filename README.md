@@ -1,4 +1,4 @@
-# SAINIK — Smart AI for National Intelligence & Command
+# SAMARAN — Smart AI for National Intelligence & Command
 
 ## Military Action Agent · India Defense Context · PS3
 **AI4Dev '26 · PSG College of Technology**
@@ -6,7 +6,7 @@
 ---
 
 ## Overview
-SAINIK is an autonomous military action agent designed to assist Indian Armed Forces commanders by executing real-time operations across three strategic theatres:
+SAMARAN is an autonomous military action agent designed to assist Indian Armed Forces commanders by executing real-time operations across three strategic theatres:
 
 - **Line of Control (LoC)** — Jammu & Kashmir
 - **Eastern Sector** — Arunachal Pradesh  
